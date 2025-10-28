@@ -11,8 +11,12 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build the Docker image
-                    sh 'docker build -t myflaskapp ./python-app-small'
+                    // Build using repository root Dockerfile. Use isUnix() to support Windows agents.
+                    if (isUnix()) {
+                        sh 'docker build -t myflaskapp .'
+                    } else {
+                        bat 'docker build -t myflaskapp .'
+                    }
                 }
             }
         }
@@ -21,10 +25,23 @@ pipeline {
             steps {
                 script {
                     // Stop and remove any old container
-                    sh 'docker rm -f flask-container || true'
+                    // Attempt to remove existing container; ignore errors if it doesn't exist.
+                    try {
+                        if (isUnix()) {
+                            sh 'docker rm -f flask-container'
+                        } else {
+                            bat 'docker rm -f flask-container'
+                        }
+                    } catch (err) {
+                        echo 'No existing container to remove'
+                    }
                     
-                    // Run new container
-                    sh 'docker run -d -p 8000:8000 --name flask-container myflaskapp'
+                    // Run new container (platform-specific runner)
+                    if (isUnix()) {
+                        sh 'docker run -d -p 8000:8000 --name flask-container myflaskapp'
+                    } else {
+                        bat 'docker run -d -p 8000:8000 --name flask-container myflaskapp'
+                    }
                 }
             }
         }
