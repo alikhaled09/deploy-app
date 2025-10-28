@@ -11,7 +11,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t myflaskapp .'
+                    // Build the Docker image
+                    sh 'docker build -t myflaskapp ./python-app-small'
                 }
             }
         }
@@ -19,10 +20,11 @@ pipeline {
         stage('Run Container') {
             steps {
                 script {
-                    sh '''
-                        docker rm -f flask-container || true
-                        docker run -d -p 8000:8000 --name flask-container myflaskapp
-                    '''
+                    // Stop and remove any old container
+                    sh 'docker rm -f flask-container || true'
+                    
+                    // Run new container
+                    sh 'docker run -d -p 8000:8000 --name flask-container myflaskapp'
                 }
             }
         }
